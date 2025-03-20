@@ -13,7 +13,7 @@ const morgan = require('morgan');
 
 // Routes
 const adminRoutes = require('./routes/admin.routes');
-const sellerRoutes = require("./routes/seller.routes")
+const userRoutes = require("./routes/user.routes")
 const app = express();
 
 //setup morgan logger
@@ -66,7 +66,7 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'Hello World' });
 });
 app.use('/api/admin', adminRoutes);
-app.use("/api/seller", sellerRoutes);
+app.use("/api/user", userRoutes);
 
 // Error handling
 app.use(errorHandler);

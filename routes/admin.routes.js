@@ -22,7 +22,7 @@ router.get('/get-admin', checkAdminLoggedIn, adminController.getAdmin);
 // router.get('/get-member/:id', checkAdminLoggedIn, adminController.getMember);
 
 // User verify routes
-// router.get('/get-users-list-to-verify', checkAdminLoggedIn, adminController.getSellerListToVerify);
+// router.get('/get-users-list-to-verify', checkAdminLoggedIn, adminController.getUserListToVerify);
 
 
 module.exports = router;

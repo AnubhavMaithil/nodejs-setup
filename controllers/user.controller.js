@@ -1,4 +1,4 @@
-const { SellerModel } = require("../models/seller.model");
+const { UserModel } = require("../models/user.model");
 const { getToken } = require("../utils/getTokenGenerate");
 const { getComparePassword, getHashPassword } = require("../utils/getPassword.password");
 const { getOtpGenerate } = require("../utils/getOtpGenerate");
@@ -10,20 +10,20 @@ const {
     generateRandomReferralLink,
 } = require("../utils/generateRandomReferralLink");
 
-exports.SellerProfile = async (req, res) => {
+exports.UserProfile = async (req, res) => {
     try {
-        const seller = await SellerModel.findById(req.seller._id);
+        const user = await UserModel.findById(req.user._id);
         res.status(200).json({
             success: true,
-            message: "Seller Profile.",
-            data: seller,
+            message: "User Profile.",
+            data: user,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.SellerRegister = async (req, res) => {
+exports.UserRegister = async (req, res) => {
     try {
         const { firstName, lastName, email, mobileNumber, password, referral } =
             req.body;
@@ -32,20 +32,20 @@ exports.SellerRegister = async (req, res) => {
             return res
                 .status(400)
                 .json({ success: false, message: "All fields are required" });
-        const sellerEmailFind = await SellerModel.findOne({
+        const userEmailFind = await UserModel.findOne({
             "email.primary": email,
         });
         const username = `${firstName.trim()} ${lastName.trim()}`;
         const newReferral = generateRandomReferralLink();
         const { otp, expireOtp } = getOtpGenerate();
         const hashPassword = await getHashPassword(password);
-        if (sellerEmailFind) {
-            if (sellerEmailFind.otpdetails.isVerified)
+        if (userEmailFind) {
+            if (userEmailFind.otpdetails.isVerified)
                 return res
                     .status(400)
                     .json({ success: false, message: ShowMessage.emailExists });
-            const newSeller = await SellerModel.findByIdAndUpdate(
-                sellerEmailFind._id,
+            const newUser = await UserModel.findByIdAndUpdate(
+                userEmailFind._id,
                 {
                     name: {
                         username,
@@ -69,23 +69,23 @@ exports.SellerRegister = async (req, res) => {
                 },
                 { new: true }
             );
-            // await sendToOtp({otp,user:newSeller,subject:EmailSendMessage.subjectVerify});
-            await newSeller.save();
+            // await sendToOtp({otp,user:newUser,subject:EmailSendMessage.subjectVerify});
+            await newUser.save();
             return res.status(201).json({
                 success: true,
                 message: ShowMessage.registerMessage,
-                data: newSeller,
+                data: newUser,
             });
         }
-        const sellerModelFind = await SellerModel.findOne({
+        const userModelFind = await UserModel.findOne({
             "mobile.primaryMobile": mobileNumber,
         });
-        if (sellerModelFind)
+        if (userModelFind)
             return res
                 .status(400)
                 .json({ success: false, message: ShowMessage.mobileExists });
         if (referral) {
-            const referralFind = await SellerModel.findOne({
+            const referralFind = await UserModel.findOne({
                 referralLink: referral,
             });
             if (!referralFind)
@@ -93,7 +93,7 @@ exports.SellerRegister = async (req, res) => {
                     success: false,
                     message: ShowMessage.referralNotExists,
                 });
-            const newSeller = new SellerModel({
+            const newUser = new UserModel({
                 name: {
                     username,
                     firstname: firstName.trim(),
@@ -116,21 +116,21 @@ exports.SellerRegister = async (req, res) => {
             });
             await sendToOtp({
                 otp,
-                user: newSeller,
+                user: newUser,
                 subject: EmailSendMessage.subjectVerify,
             });
-            referralFind.partners.push(newSeller._id);
+            referralFind.partners.push(newUser._id);
             await referralFind.save();
-            await newSeller.save();
+            await newUser.save();
             return res.status(201).json({
                 success: true,
                 message: ShowMessage.registerMessage,
-                data: newSeller,
+                data: newUser,
             });
         }
-        // const sellerModelFind = await SellerModel.findOne({'mobile.primaryMobile':mobileNumber});
-        // if(sellerModelFind) return res.status(400).json({success:false,message: ShowMessage.mobileExists});
-        const newSeller = new SellerModel({
+        // const userModelFind = await UserModel.findOne({'mobile.primaryMobile':mobileNumber});
+        // if(userModelFind) return res.status(400).json({success:false,message: ShowMessage.mobileExists});
+        const newUser = new UserModel({
             name: {
                 username,
                 firstname: firstName.trim(),
@@ -145,11 +145,11 @@ exports.SellerRegister = async (req, res) => {
         });
         await sendToOtp({
             otp,
-            user: newSeller,
+            user: newUser,
             subject: EmailSendMessage.subjectVerify,
         });
         if (referral) {
-            const referralFind = await SellerModel.findOne({
+            const referralFind = await UserModel.findOne({
                 referralLink: referral,
             });
             if (!referralFind)
@@ -157,41 +157,41 @@ exports.SellerRegister = async (req, res) => {
                     success: false,
                     message: ShowMessage.referralNotExists,
                 });
-            referralFind.partners.push(newSeller._id);
+            referralFind.partners.push(newUser._id);
             await referralFind.save();
         }
-        await newSeller.save();
+        await newUser.save();
         return res.status(201).json({
             success: true,
             message: ShowMessage.registerMessage,
-            data: newSeller,
+            data: newUser,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-exports.SellerOTPVerify = async (req, res) => {
+exports.UserOTPVerify = async (req, res) => {
     const { email, otp } = req.body;
     try {
-        const seller = await SellerModel.findOne({ "email.primary": email });
-        if (!seller)
+        const user = await UserModel.findOne({ "email.primary": email });
+        if (!user)
             return res
                 .status(400)
                 .json({ success: false, message: "Invalid credentials" });
         if (
-            seller.otpdetails.otp !== otp ||
-            seller.otpdetails.otpExpire < Date.now()
+            user.otpdetails.otp !== otp ||
+            user.otpdetails.otpExpire < Date.now()
         )
             return res
                 .status(400)
                 .json({ success: false, message: "Invalid or expired OTP" });
-        seller.otpdetails.isVerified = true;
-        seller.otpdetails.otp = null;
-        seller.otpdetails.expireOtp = null;
-        // const token = await getToken(seller)
-        // seller.token = token
-        await seller.save();
+        user.otpdetails.isVerified = true;
+        user.otpdetails.otp = null;
+        user.otpdetails.expireOtp = null;
+        // const token = await getToken(user)
+        // user.token = token
+        await user.save();
         // res.cookie('token', token, {
         //     httpOnly: true,
         //     secure: process.env.NODE_ENV === 'production',
@@ -199,15 +199,15 @@ exports.SellerOTPVerify = async (req, res) => {
         // });
         res.status(200).json({
             success: true,
-            message: "Seller Account verified successfully.",
-            data: seller,
+            message: "User Account verified successfully.",
+            data: user,
         });
     } catch (error) {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
-exports.SellerChangePassword = async (req, res) => {
+exports.UserChangePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
         return res.status(400).json({
@@ -216,7 +216,7 @@ exports.SellerChangePassword = async (req, res) => {
         });
     }
     try {
-        const user = await SellerModel.findById(req.user._id);
+        const user = await UserModel.findById(req.user._id);
         if (!user) {
             return res
                 .status(404)
@@ -243,97 +243,97 @@ exports.SellerChangePassword = async (req, res) => {
     }
 };
 
-exports.SellerRegenerateOTP = async (req, res) => {
+exports.UserRegenerateOTP = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email)
             return res
                 .status(400)
                 .json({ success: false, message: "Email is required." });
-        const seller = await SellerModel.findOne({ "email.primary": email });
-        if (!seller)
+        const user = await UserModel.findOne({ "email.primary": email });
+        if (!user)
             return res
                 .status(400)
-                .json({ success: false, message: "Seller not exists." });
+                .json({ success: false, message: "User not exists." });
         const { otp, expireOtp } = getOtpGenerate();
-        seller.otpdetails.otp = otp;
-        seller.otpdetails.expireOtp = expireOtp;
+        user.otpdetails.otp = otp;
+        user.otpdetails.expireOtp = expireOtp;
         const vf = await sendToOtp({
             subject: "Bionova Resend OTP Verification Code.",
-            user: seller,
+            user: user,
             otp,
         });
-        await seller.save();
-        console.log(seller);
+        await user.save();
+        console.log(user);
         return res.status(200).json({
             success: true,
             message:
                 "OTP has been regenerated. Please check your Gmail account for the OTP.",
-            seller,
+            user,
             vf,
         });
     } catch (error) { }
 };
 
-exports.SellerLogin = async (req, res) => {
+exports.UserLogin = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password)
         return res
             .status(500)
             .json({ success: false, message: "All field Required." });
     try {
-        const seller = await SellerModel.findOne({ "email.primary": email });
-        if (!seller)
+        const user = await UserModel.findOne({ "email.primary": email });
+        if (!user)
             return res
                 .status(400)
                 .json({ success: false, message: "Vendor not Exists." });
-        if (seller.isBlocked)
+        if (user.isBlocked)
             return res.status(400).json({
                 success: false,
                 message:
                     "Vendor is blocked. Contact Admin for further process.",
                 status: "blocked",
-                data: seller,
+                data: user,
             });
-        if (seller.isVendorVerified === "requested")
+        if (user.isVendorVerified === "requested")
             return res.status(400).json({
                 success: false,
                 message: "Fill The form for verification.",
                 status: "requested",
-                data: seller,
+                data: user,
             });
-        if (seller.isVendorVerified === "pending")
+        if (user.isVendorVerified === "pending")
             return res.status(400).json({
                 success: false,
                 message: "Vendor is pending for verification.",
                 status: "pending",
-                data: seller,
+                data: user,
             });
-        if (seller.isVendorVerified === "rejected")
+        if (user.isVendorVerified === "rejected")
             return res.status(400).json({
                 success: false,
                 message: "Vendor is rejected for verification.",
                 status: "rejected",
-                reason: seller.vendorRejectionReason,
-                data: seller,
+                reason: user.vendorRejectionReason,
+                data: user,
             });
-        if (!seller)
+        if (!user)
             return res
                 .status(400)
                 .json({ success: false, message: "Vendor not Exists." });
-        const isMatch = await getComparePassword(seller, password);
+        const isMatch = await getComparePassword(user, password);
         if (!isMatch)
             return res
                 .status(400)
                 .json({ success: false, message: "Invalid credentials" });
-        if (!seller.otpdetails.isVerified)
+        if (!user.otpdetails.isVerified)
             return res.status(401).json({
                 success: false,
                 message: "Please verify your account",
             });
-        const token = await getToken(seller);
-        seller.token = token;
-        await seller.save();
+        const token = await getToken(user);
+        user.token = token;
+        await user.save();
         res.cookie("token", token, {
             httpOnly: false,
             path: "/",
@@ -341,7 +341,7 @@ exports.SellerLogin = async (req, res) => {
             sameSite: "Strict",
             maxAge: 24 * 60 * 60 * 1000, // 1 din tak valid rahega
         });
-        req.seller = seller;
+        req.user = user;
         res.status(200).json({
             success: true,
             message: "Login successful",
@@ -352,11 +352,11 @@ exports.SellerLogin = async (req, res) => {
     }
 };
 
-exports.SellerLogout = async (req, res) => {
+exports.UserLogout = async (req, res) => {
     try {
-        const seller = await SellerModel.findById(req.seller._id);
-        seller.tokenBlock.push(seller.token);
-        seller.token = null;
+        const user = await UserModel.findById(req.user._id);
+        user.tokenBlock.push(user.token);
+        user.token = null;
         res.clearCookie("token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -374,17 +374,17 @@ exports.SellerLogout = async (req, res) => {
     }
 };
 
-exports.GetSeller = async (req, res) => {
+exports.GetUser = async (req, res) => {
     try {
-        const seller = req.seller;
-        const newSeller = await SellerModel.findById(seller._id).populate(
+        const user = req.user;
+        const newUser = await UserModel.findById(user._id).populate(
             "addtocart"
         );
-        // console.log(newSeller);
+        // console.log(newUser);
         return res.status(200).json({
             success: true,
-            message: "Seller fetched successfully.",
-            data: newSeller,
+            message: "User fetched successfully.",
+            data: newUser,
         });
     } catch (error) {
         console.log(error);
@@ -401,16 +401,16 @@ exports.PasswordForgot = async (req, res) => {
             .status(400)
             .json({ success: false, message: "Email is required." });
     try {
-        const seller = await SellerModel.findOne({ email });
-        if (!seller)
+        const user = await UserModel.findOne({ email });
+        if (!user)
             return res
                 .status(404)
-                .json({ success: false, message: "Seller not found." });
+                .json({ success: false, message: "User not found." });
         const { otp, expireOtp } = getOtpGenerate();
-        seller.otpdetails.otp = otp;
-        seller.$assertPopulatedotpdetails.expireOtp = expireOtp;
-        await seller.save();
-        sendToOtp({ otp, seller, subject: "Bionova Password Forgot OTP." });
+        user.otpdetails.otp = otp;
+        user.$assertPopulatedotpdetails.expireOtp = expireOtp;
+        await user.save();
+        sendToOtp({ otp, user, subject: "Bionova Password Forgot OTP." });
 
         return res
             .status(200)
@@ -430,21 +430,21 @@ exports.VerifyForgotPasswordOtp = async (req, res) => {
             .status(400)
             .json({ success: false, message: "Email and OTP are required." });
     try {
-        const seller = await SellerModel.findOne({ email });
-        if (!seller)
+        const user = await UserModel.findOne({ email });
+        if (!user)
             return res
                 .status(404)
-                .json({ success: false, message: "Seller not found." });
-        if (seller.otp !== otp || seller.otpExpire < Date.now())
+                .json({ success: false, message: "User not found." });
+        if (user.otp !== otp || user.otpExpire < Date.now())
             return res
                 .status(400)
                 .json({ success: false, message: "Invalid or expired OTP" });
         const hashPassword = await getHashPassword(newPassword);
         // Clear OTP after verification
-        seller.otpdetails.otp = null;
-        seller.otpdetails.expireOtp = null;
-        seller.password = hashPassword; // Ensure to hash the new password before saving
-        await seller.save();
+        user.otpdetails.otp = null;
+        user.otpdetails.expireOtp = null;
+        user.password = hashPassword; // Ensure to hash the new password before saving
+        await user.save();
 
         return res.status(200).json({
             success: true,
@@ -466,8 +466,8 @@ exports.ClientProfileUpdate = async (req, res) => {
             .json({ success: false, message: "All fields are required." });
 
     try {
-        const seller = await SellerModel.findByIdAndUpdate(
-            req.seller._id,
+        const user = await UserModel.findByIdAndUpdate(
+            req.user._id,
             {
                 name: { username, firstname, lastname },
                 mobile: { primaryMobile: mobile },
@@ -475,10 +475,10 @@ exports.ClientProfileUpdate = async (req, res) => {
             },
             { new: true }
         );
-        if (!seller) {
+        if (!user) {
             return res
                 .status(404)
-                .json({ success: false, message: "Seller not found" });
+                .json({ success: false, message: "User not found" });
         }
         res.status(200).json({
             success: true,
@@ -570,11 +570,11 @@ exports.fillVendorDetails = async (req, res) => {
     }
 
     try {
-        const seller = await SellerModel.findById(id);
-        if (!seller) {
+        const user = await UserModel.findById(id);
+        if (!user) {
             return res
                 .status(404)
-                .json({ success: false, message: "Seller not found." });
+                .json({ success: false, message: "User not found." });
         }
 
         const uploadImageIfUrl = async (image, folder) => {
@@ -613,8 +613,8 @@ exports.fillVendorDetails = async (req, res) => {
         );
         const mcaImgFileName = await uploadImageIfUrl(mcaImg, "generaldetail");
 
-        // Update seller details
-        const updatedSeller = await SellerModel.findByIdAndUpdate(
+        // Update user details
+        const updatedUser = await UserModel.findByIdAndUpdate(
             id,
             {
                 $set: {
@@ -670,17 +670,17 @@ exports.fillVendorDetails = async (req, res) => {
         );
 
         if (req.path.includes("/update")) {
-            updatedSeller.isUpdatedVendor = "pending";
-            await updatedSeller.save();
+            updatedUser.isUpdatedVendor = "pending";
+            await updatedUser.save();
         } else {
-            updatedSeller.isVendorVerified = "pending";
-            await updatedSeller.save();
+            updatedUser.isVendorVerified = "pending";
+            await updatedUser.save();
         }
 
         return res.status(200).json({
             success: true,
-            message: "Seller details updated successfully.",
-            data: updatedSeller,
+            message: "User details updated successfully.",
+            data: updatedUser,
         });
     } catch (error) {
         console.error("Error in creating/updating general details:", error);
@@ -691,19 +691,19 @@ exports.fillVendorDetails = async (req, res) => {
 };
 
 
-exports.getAllSellers = async (req, res) => {
+exports.getAllUsers = async (req, res) => {
     try {
-        const sellers = await SellerModel.find();
-        return res.status(200).json({ success: true, data: sellers });
+        const users = await UserModel.find();
+        return res.status(200).json({ success: true, data: users });
     } catch (error) {
         return res.status(401).json({ success: false, message: error.message });
     }
 };
 
-exports.getSellerDetails = async (req, res) => {
+exports.getUserDetails = async (req, res) => {
     try {
-        const seller = await SellerModel.findById(req.params.id);
-        return res.status(200).json({ success: true, data: seller });
+        const user = await UserModel.findById(req.params.id);
+        return res.status(200).json({ success: true, data: user });
     } catch (error) {
         return res.status(401).json({ success: false, message: error.message });
     }

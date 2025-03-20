@@ -1,4 +1,4 @@
-const user = require('../models/user.model');
+const user = require('../models/admin.model');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/email');
 const { getComparePassword, getHashPassword } = require('../utils/encrypt');
@@ -184,13 +184,13 @@ exports.resetPassword = async (req, res) => {
 //   }
 // }
 
-// seller verify routes
-// exports.getSellerListToVerify = async (req, res) => {
+// user verify routes
+// exports.getUserListToVerify = async (req, res) => {
 //   try {
-//     const sellers = await SellerModel.find({ $or: [{ isVendorVerified: "pending" }, { isUpdatedVendor: "pending" }] });
-//     res.status(200).json({ data: sellers });
+//     const users = await UserModel.find({ $or: [{ isVendorVerified: "pending" }, { isUpdatedVendor: "pending" }] });
+//     res.status(200).json({ data: users });
 //   } catch (error) {
-//     console.error('Error getting seller list:', error);
+//     console.error('Error getting user list:', error);
 //     res.status(500).json({ message: error.message });
 //   }
 // }

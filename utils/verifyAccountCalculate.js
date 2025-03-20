@@ -1,28 +1,28 @@
-const { SellerModel } = require('../models/seller.model');
+const { UserModel } = require('../models/user.model');
 // Function to verify accounts
-const sellerNotverifyAccountDelete = async () => {
+const userNotverifyAccountDelete = async () => {
     try {
-        const sellers = await SellerModel.find({});
-        for (const seller of sellers) {
+        const users = await UserModel.find({});
+        for (const user of users) {
             try {
-                if (seller.createdAt && new Date() - seller.createdAt < 10 * 60 * 1000) {
+                if (user.createdAt && new Date() - user.createdAt < 10 * 60 * 1000) {
                     continue; // Skip if account is created within the last 15 minutes
                 };
                 // Delete the account if not verified
-                if (!seller.otpdetails.isVerified) {
-                    const deleteAccount = await SellerModel.findByIdAndDelete(seller._id);
+                if (!user.otpdetails.isVerified) {
+                    const deleteAccount = await UserModel.findByIdAndDelete(user._id);
                     if (deleteAccount) {
-                        // console.log(`Account deleted: ${seller.sellername}`);
+                        // console.log(`Account deleted: ${user.username}`);
                     }
-                    await SellerModel.findByIdAndUpdate(seller.sponsor, { $pull: { partners: seller._id } });
+                    await UserModel.findByIdAndUpdate(user.sponsor, { $pull: { partners: user._id } });
                 }
             } catch (err) {
-                // console.error("Error in sellerNotverifyAccountDelete:", err.message);
+                // console.error("Error in userNotverifyAccountDelete:", err.message);
             }
         }
     } catch (err) {
-        // console.error("Error in sellerNotverifyAccountDelete:", err.message);
+        // console.error("Error in userNotverifyAccountDelete:", err.message);
     }
 };
 
-module.exports = { sellerNotverifyAccountDelete }
+module.exports = { userNotverifyAccountDelete }
